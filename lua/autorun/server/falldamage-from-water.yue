@@ -1,0 +1,67 @@
+AddonName = "Water Fall Damage"
+:abs, :min, :random = math
+CHAN_BODY = CHAN_BODY
+DMG_FALL = DMG_FALL
+:Run, :Add = hook
+:GetWorld = game
+
+CS_PLAYER_MAX_SAFE_FALL_SPEED = 580
+CS_PLAYER_FATAL_FALL_SPEED = 1100
+
+-- approx 30.28 m/s = 109 km/h
+FatalWaterSpeed = 1615
+
+-- damage per unit per second.
+CS_DAMAGE_FOR_FALL_SPEED = 100 / ( CS_PLAYER_FATAL_FALL_SPEED - CS_PLAYER_MAX_SAFE_FALL_SPEED )
+DamageForWaterFallSpeed = 100 / ( FatalWaterSpeed - CS_PLAYER_MAX_SAFE_FALL_SPEED )
+
+TakeDamage = ( fallDamage ) =>
+    damageInfo = DamageInfo!
+    damageInfo\SetAttacker @
+    damageInfo\SetDamage fallDamage
+    damageInfo\SetInflictor GetWorld!
+    damageInfo\SetDamageType DMG_FALL
+    damageInfo\SetDamagePosition @GetPos!
+    @TakeDamageInfo damageInfo
+    @EmitSound( "Player.FallDamage", 80, random( 80, 120 ), min( 1, fallDamage / @Health! ), CHAN_BODY, 0, 1 )
+
+PlayerTouchedWater = ( speed ) =>
+    unless speed
+        speed = abs( @GetVelocity![ 3 ] )
+    speed -= CS_PLAYER_MAX_SAFE_FALL_SPEED
+
+    fallDamage = speed * DamageForWaterFallSpeed * 1.25
+    if fallDamage < 1
+        return
+
+    fallDamage = Run( "GetFallDamage", @, speed, true ) or fallDamage
+    if fallDamage < 1
+        return
+
+    TakeDamage( @, fallDamage )
+
+Add "OnEntityWaterLevelChanged", AddonName, ( old, new ) =>
+    if @IsPlayer! and old == 0 and new == 1
+        PlayerTouchedWater( @ )
+
+Add "OnPlayerHitGround", AddonName, ( inWater, onFloater, speed ) =>
+    if inWater and not onFloater
+        PlayerTouchedWater( @, speed )
+        return
+
+    if onFloater
+        speed *= 0.75
+
+    fallDamage = ( speed - CS_PLAYER_MAX_SAFE_FALL_SPEED ) * CS_DAMAGE_FOR_FALL_SPEED * 1.25
+    if fallDamage < 1
+        return
+
+    fallDamage = Run( "GetFallDamage", @, speed, false ) or fallDamage
+    if fallDamage < 1
+        return
+
+    TakeDamage( @, fallDamage )
+
+Add "GetFallDamage", "!!!dirty_hack#{AddonName}", ( speed, inWater ) =>
+    if inWater == nil
+        return 0
