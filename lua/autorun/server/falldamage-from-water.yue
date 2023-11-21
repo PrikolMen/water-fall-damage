@@ -1,4 +1,5 @@
 AddonName = "Water Fall Damage"
+MOVETYPE_WALK = MOVETYPE_WALK
 :abs, :min, :random = math
 CHAN_BODY = CHAN_BODY
 DMG_FALL = DMG_FALL
@@ -41,10 +42,16 @@ PlayerTouchedWater = ( speed ) =>
     TakeDamage( @, fallDamage )
 
 Add "OnEntityWaterLevelChanged", AddonName, ( old, new ) =>
-    if @IsPlayer! and old == 0 and new == 1
+    unless @IsPlayer! and @GetMoveType! == MOVETYPE_WALK
+        return
+
+    if old == 0 and new == 1
         PlayerTouchedWater( @ )
 
 Add "OnPlayerHitGround", AddonName, ( inWater, onFloater, speed ) =>
+    unless @GetMoveType! == MOVETYPE_WALK
+        return
+
     if inWater and not onFloater
         PlayerTouchedWater( @, speed )
         return
