@@ -45,7 +45,7 @@ Add "OnEntityWaterLevelChanged", AddonName, ( old, new ) =>
     unless @IsPlayer! and @GetMoveType! == MOVETYPE_WALK
         return
 
-    if old == 0 and new == 1
+    if old == 0 and new > old
         PlayerTouchedWater( @ )
 
 Add "OnPlayerHitGround", AddonName, ( inWater, onFloater, speed ) =>
