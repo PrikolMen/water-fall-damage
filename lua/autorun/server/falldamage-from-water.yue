@@ -1,4 +1,4 @@
-AddonName = "Water Fall Damage"
+addonName = "Water Fall Damage"
 MOVETYPE_WALK = MOVETYPE_WALK
 :abs, :min, :random = math
 CHAN_BODY = CHAN_BODY
@@ -16,19 +16,20 @@ FatalWaterSpeed = 1615
 CS_DAMAGE_FOR_FALL_SPEED = 100 / ( CS_PLAYER_FATAL_FALL_SPEED - CS_PLAYER_MAX_SAFE_FALL_SPEED )
 DamageForWaterFallSpeed = 100 / ( FatalWaterSpeed - CS_PLAYER_MAX_SAFE_FALL_SPEED )
 
-TakeDamage = ( fallDamage ) =>
+takeDamage = ( fallDamage ) =>
     damageInfo = DamageInfo!
     damageInfo\SetAttacker @
     damageInfo\SetDamage fallDamage
     damageInfo\SetInflictor GetWorld!
     damageInfo\SetDamageType DMG_FALL
     damageInfo\SetDamagePosition @GetPos!
-    @TakeDamageInfo damageInfo
+    @TakeDamageInfo( damageInfo )
     @EmitSound( "Player.FallDamage", 80, random( 80, 120 ), min( 1, fallDamage / @Health! ), CHAN_BODY, 0, 1 )
 
 PlayerTouchedWater = ( speed ) =>
     unless speed
         speed = abs( @GetVelocity![ 3 ] )
+
     speed -= CS_PLAYER_MAX_SAFE_FALL_SPEED
 
     fallDamage = speed * DamageForWaterFallSpeed * 1.25
@@ -39,16 +40,16 @@ PlayerTouchedWater = ( speed ) =>
     if fallDamage < 1
         return
 
-    TakeDamage( @, fallDamage )
+    takeDamage( @, fallDamage )
 
-Add "OnEntityWaterLevelChanged", AddonName, ( old, new ) =>
+Add "OnEntityWaterLevelChanged", addonName, ( old, new ) =>
     unless @IsPlayer! and @GetMoveType! == MOVETYPE_WALK
         return
 
     if old == 0 and new > old
         PlayerTouchedWater( @ )
 
-Add "OnPlayerHitGround", AddonName, ( inWater, onFloater, speed ) =>
+Add "OnPlayerHitGround", addonName, ( inWater, onFloater, speed ) =>
     unless @GetMoveType! == MOVETYPE_WALK
         return
 
@@ -67,8 +68,8 @@ Add "OnPlayerHitGround", AddonName, ( inWater, onFloater, speed ) =>
     if fallDamage < 1
         return
 
-    TakeDamage( @, fallDamage )
+    takeDamage( @, fallDamage )
 
-Add "GetFallDamage", "!!!dirty_hack#{AddonName}", ( speed, inWater ) =>
+Add "GetFallDamage", "!!!dirty_hack#{addonName}", ( speed, inWater ) =>
     if inWater == nil
         return 0
